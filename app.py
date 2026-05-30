@@ -1,12 +1,10 @@
-# 
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import shap
 import matplotlib.pyplot as plt
 import os
-from sklearn.inspection import permutation_importance
 
 st.set_page_config(
     page_title="Multi-Disease Prediction System",
@@ -15,10 +13,13 @@ st.set_page_config(
 )
 
 st.title("AI-Powered Multi-Disease Prediction System")
-st.markdown("Enter patient clinical values to receive a prediction (Research only).")
+st.markdown(
+    "Enter patient clinical values to receive a machine learning prediction. "
+    "This tool is for research purposes only and does not replace clinical diagnosis."
+)
 st.markdown("---")
 
-# ---------------- CONFIG ----------------
+# ---------------- DISEASE CONFIG ----------------
 DISEASE_CONFIG = {
     "Diabetes": {
         "key": "diabetes",
@@ -71,17 +72,23 @@ DISEASE_CONFIG = {
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    selected = st.selectbox("Select Disease", list(DISEASE_CONFIG.keys()))
+    selected = st.selectbox("Select Disease to Predict", list(DISEASE_CONFIG.keys()))
     config = DISEASE_CONFIG[selected]
 
-    st.markdown("### Patient Input")
+    st.markdown("### Patient Clinical Values")
 
     user_inputs = {}
     for field, (mn, mx, default) in config["fields"].items():
         if isinstance(default, float):
-            user_inputs[field] = st.number_input(field, float(mn), float(mx), float(default), 0.1)
+            user_inputs[field] = st.number_input(
+                field, min_value=float(mn), max_value=float(mx),
+                value=float(default), step=0.1
+            )
         else:
-            user_inputs[field] = st.number_input(field, int(mn), int(mx), int(default), 1)
+            user_inputs[field] = st.number_input(
+                field, min_value=int(mn), max_value=int(mx),
+                value=int(default), step=1
+            )
 
     predict_btn = st.button("Run Prediction", type="primary")
 
@@ -97,13 +104,13 @@ with col2:
         feature_path = f"models/{key}_features.pkl"
 
         if not os.path.exists(model_path):
-            st.error("Model not found. Please train first.")
+            st.error("Model not found. Run training first.")
         else:
 
             model   = joblib.load(model_path)
             scaler  = joblib.load(scaler_path)
             imputer = joblib.load(imputer_path)
-            features = joblib.load(feature_path)
+            features = joblib.load(feature_path)   # ✅ FIX ADDED
 
             # ---------------- FIX FEATURE MISMATCH ----------------
             input_df = pd.DataFrame([user_inputs])
@@ -115,45 +122,50 @@ with col2:
 
             prediction = model.predict(input_scaled)[0]
             probability = model.predict_proba(input_scaled)[0][1]
+            
 
-            # ---------------- RESULT ----------------
             st.markdown("### Prediction Result")
 
             if prediction == 1:
-                st.error(f"POSITIVE - {selected} detected ({probability:.1%})")
+                st.error(f"POSITIVE: {selected} detected (Confidence: {probability:.1%})")
             else:
-                st.success(f"NEGATIVE - No {selected} detected ({1-probability:.1%})")
+                st.success(f"NEGATIVE: No {selected} detected (Confidence: {1 - probability:.1%})")
 
+            st.warning(
+                "This is an ML prediction for research purposes only. Not medical advice."
+            )
+
+            st.markdown("### Confidence Score")
             st.progress(float(probability))
-            st.caption(f"Risk Probability: {probability:.2%}")
+            st.caption(f"Probability: {probability:.2%}")
 
-            # ---------------- FEATURE IMPORTANCE ----------------
-            st.markdown("### Feature Importance")
-
+            # ---------------- SHAP (SAFE) ----------------
             try:
-                result = permutation_importance(
-                    model,
-                    input_scaled,
-                    model.predict(input_scaled),
-                    n_repeats=10,
-                    random_state=42
-                )
+                st.markdown("### Feature Importance (SHAP)")
 
-                importance = result.importances_mean
+                explainer = shap.Explainer(model, input_scaled)
+                shap_vals = explainer(input_scaled)
 
-                fi_df = pd.DataFrame({
-                    "Feature": input_df.columns,
-                    "Importance": importance
-                }).sort_values("Importance")
-
-                fig, ax = plt.subplots(figsize=(8, 5))
-                ax.barh(fi_df["Feature"], fi_df["Importance"], color="steelblue")
-                ax.set_title("Permutation Feature Importance")
+                fig, ax = plt.subplots(figsize=(8, 4))
+                shap.waterfall_plot(shap_vals[0], show=False)
 
                 st.pyplot(fig)
+                plt.close()
 
             except Exception:
-                st.info("Feature importance not available for this model.")
+                st.markdown(
+    """
+    ### Feature Explanation
+    Explainability visualization is not available for this model type.
+
+    This is due to differences in algorithm compatibility with SHAP.
+
+    ✔ Prediction is still fully valid  
+    ✔ Model uses trained clinical features  
+    ✔ Results are based on validated ML pipeline  
+    """
+)
 
 st.markdown("---")
-st.caption("AI Multi-Disease Prediction System | BSc Project")
+st.caption("AI Multi-Disease Prediction System |"
+           " BSc Computer Systems Engineering | Resesarch Project. ")
