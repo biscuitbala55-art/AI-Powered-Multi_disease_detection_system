@@ -1,0 +1,4 @@
+Disease,accuracy,precision,recall,f1,auc
+Diabetes,0.815,0.8058,0.83,0.8177,0.8916
+Heart Disease,0.9953,0.9906,1.0,0.9953,0.999
+Kidney Disease,1.0,1.0,1.0,1.0,1.0
