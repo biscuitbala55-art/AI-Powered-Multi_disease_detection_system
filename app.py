@@ -39,7 +39,7 @@ DISEASE_CONFIG = {
         "fields": {
             "age": (20, 100, 50),
             "sex": (0, 1, 1),
-            "cp": (0, 3, 0),
+            "ChestPain": (0, 3, 0),
             "trestbps": (80, 200, 120),
             "chol": (100, 600, 200),
             "fbs": (0, 1, 0),
