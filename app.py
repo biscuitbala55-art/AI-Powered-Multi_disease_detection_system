@@ -55,15 +55,15 @@ DISEASE_CONFIG = {
     "Kidney Disease": {
         "key": "kidney",
         "fields": {
-            "age": (1, 120, 45),
-            "bp": (50, 180, 80),
-            "bgr": (50, 500, 120),
-            "bu": (1, 400, 40),
-            "sc": (0.0, 20.0, 1.2),
-            "hemo": (3.0, 20.0, 12.0),
-            "pcv": (10, 60, 40),
-            "wc": (2000, 20000, 8000),
-            "rc": (1.0, 10.0, 5.0)
+            "Age": (1, 120, 45),
+            "Blood Pressure": (50, 180, 80),
+            "Blood Glucose Random": (50, 500, 120),
+            "Blood Urea": (1, 400, 40),
+            "Serum Creatinine": (0.0, 20.0, 1.2),
+            "Hemoglobin": (3.0, 20.0, 12.0),
+            "Packed Cell Volume": (10, 60, 40),
+            "White blood Cell Count": (2000, 20000, 8000),
+            "Red blood Cell Count": (1.0, 10.0, 5.0)
         }
     }
 }
